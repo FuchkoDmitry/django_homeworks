@@ -25,6 +25,12 @@ def dishes_view(request):
 
 
 def recipe_view(request, dish):
+    servings = int(request.GET.get('servings', 1))
     recipe = DATA.get(dish)
-    context = {'recipe': recipe}
+    if servings > 1:
+        for ingredients in recipe:
+            recipe[ingredients] *= servings
+
+    context = {'recipe': recipe,
+               'servings': servings}
     return render(request, 'calculator/index.html', context)
