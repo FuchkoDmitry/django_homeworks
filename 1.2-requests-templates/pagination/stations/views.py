@@ -16,10 +16,10 @@ def index(request):
 def bus_stations_view(request):
     page_number = int(request.GET.get('page', 1))
     paginator = Paginator(BUS_STATIONS_LIST, 10)
-    bus_stations = paginator.get_page(page_number)
+    page = paginator.get_page(page_number)
 
     context = {
-        'bus_stations': bus_stations,
-        'page': bus_stations,
+        'bus_stations': page.object_list,
+        'page': page,
     }
     return render(request, 'stations/index.html', context)
