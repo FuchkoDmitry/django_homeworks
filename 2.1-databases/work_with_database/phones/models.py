@@ -1,5 +1,7 @@
 from django.db import models
-from django.utils.text import slugify
+# from django.utils.text import slugify
+# при помощи pytils будут преобразованы русские буквы
+from pytils.translit import slugify
 
 
 class Phone(models.Model):
