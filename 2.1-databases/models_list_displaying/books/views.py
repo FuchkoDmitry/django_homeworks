@@ -16,7 +16,8 @@ def books_view(request):
 # def books_by_date(request, date):
 #     template = 'books/books_list.html'
 #     books = Book.objects.filter(pub_date=date)
-#     dates = sorted(list(set([book.pub_date.strftime('%Y-%m-%d') for book in Book.objects.all()])))
+#     dates = sorted(list(set([book.pub_date.strftime('%Y-%m-%d')
+#     for book in Book.objects.all()])))
 #     index = dates.index(date)
 #     context = {
 #         'books': books,
@@ -38,11 +39,13 @@ def books_by_date(request, date):
     books = Book.objects.filter(pub_date=date)
     last_book_index = len(books) - 1
     try:
-        previous_date = books[0].get_previous_by_pub_date().pub_date.strftime('%Y-%m-%d')
+        previous_date = books[0].get_previous_by_pub_date().\
+            pub_date.strftime('%Y-%m-%d')
     except Book.DoesNotExist:
         previous_date = None
     try:
-        next_date = books[last_book_index].get_next_by_pub_date().pub_date.strftime('%Y-%m-%d')
+        next_date = books[last_book_index].get_next_by_pub_date().\
+            pub_date.strftime('%Y-%m-%d')
     except Book.DoesNotExist:
         next_date = None
 
