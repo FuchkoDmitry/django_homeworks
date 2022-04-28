@@ -8,8 +8,7 @@ class ArticleScopeInlineFormset(BaseInlineFormSet):
     def clean(self):
         main_tags = 0
         for form in self.forms:
-            print(form.cleaned_data)
-            if form.cleaned_data.get('is_main', False):
+            if form.cleaned_data.get('is_main', False) and not form.cleaned_data['DELETE']:
                 main_tags += 1
         if main_tags != 1:
             raise ValidationError('Необходимо выбрать один основной раздел ')
