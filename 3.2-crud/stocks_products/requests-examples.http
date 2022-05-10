@@ -1,7 +1,7 @@
 # примеры API-запросов
 
 @baseUrl = http://localhost:8000/api/v1
-
+###
 # создание продукта
 POST {{baseUrl}}/products/
 Content-Type: application/json

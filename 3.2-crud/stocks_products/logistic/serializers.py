@@ -1,20 +1,21 @@
 from rest_framework import serializers
 
-
-class ProductSerializer(serializers.ModelSerializer):
-    # настройте сериализатор для продукта
-    pass
+from logistic.models import Product, StockProduct, Stock
 
 
 class ProductPositionSerializer(serializers.ModelSerializer):
-    # настройте сериализатор для позиции продукта на складе
-    pass
+
+    class Meta:
+        model = StockProduct
+        fields = ['product', 'quantity', 'price']
 
 
 class StockSerializer(serializers.ModelSerializer):
     positions = ProductPositionSerializer(many=True)
 
-    # настройте сериализатор для склада
+    class Meta:
+        model = Stock
+        fields = ('id', 'address', 'positions')
 
     def create(self, validated_data):
         # достаем связанные данные для других таблиц
@@ -26,6 +27,13 @@ class StockSerializer(serializers.ModelSerializer):
         # здесь вам надо заполнить связанные таблицы
         # в нашем случае: таблицу StockProduct
         # с помощью списка positions
+        for position in positions:
+            StockProduct.objects.create(
+                stock=stock,
+                product=position['product'],
+                price=position['price'],
+                quantity=position.get('quantity', 1)
+            )
 
         return stock
 
@@ -34,10 +42,26 @@ class StockSerializer(serializers.ModelSerializer):
         positions = validated_data.pop('positions')
 
         # обновляем склад по его параметрам
-        stock = super().update(instance, validated_data)
+        instance = super().update(instance, validated_data)
 
         # здесь вам надо обновить связанные таблицы
         # в нашем случае: таблицу StockProduct
         # с помощью списка positions
+        for position in positions:
+            StockProduct.objects.update_or_create(
+                stock=instance,
+                product=position['product'],
+                defaults={
+                    'price': position['price'],
+                    'quantity': position.get('quantity', 1)
+                }
+            )
 
-        return stock
+        return instance
+
+
+class ProductSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Product
+        fields = ['id', 'title', 'description']
