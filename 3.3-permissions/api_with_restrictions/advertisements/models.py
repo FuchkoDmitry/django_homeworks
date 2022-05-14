@@ -7,6 +7,7 @@ class AdvertisementStatusChoices(models.TextChoices):
 
     OPEN = "OPEN", "Открыто"
     CLOSED = "CLOSED", "Закрыто"
+    DRAFT = "DRAFT", "Черновик"
 
 
 class Advertisement(models.Model):
@@ -27,4 +28,14 @@ class Advertisement(models.Model):
     )
     updated_at = models.DateTimeField(
         auto_now=True
+    )
+
+
+class FavoriteAdvertisement(models.Model):
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE, verbose_name='пользователь'
+    )
+    favorite_advertisements = models.ManyToManyField(
+        Advertisement, related_name='in_favorites_to'
     )

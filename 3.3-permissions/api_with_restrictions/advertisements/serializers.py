@@ -2,7 +2,7 @@ from django.contrib.auth.models import User
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 
-from advertisements.models import Advertisement
+from advertisements.models import Advertisement, FavoriteAdvertisement
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -41,7 +41,6 @@ class AdvertisementSerializer(serializers.ModelSerializer):
 
     def validate(self, data):
         """Метод для валидации. Вызывается при создании и обновлении."""
-        print(self.context['request'].user)
         if self.context['request'].method == 'POST':
             opened_advertisements = Advertisement.objects.filter(
                 creator=self.context['request'].user,
@@ -50,3 +49,35 @@ class AdvertisementSerializer(serializers.ModelSerializer):
                 raise ValidationError('нельзя иметь более 10 открытых объявлений')
 
         return data
+
+
+
+
+class FavoriteAdvertisementSerializer(serializers.ModelSerializer):
+    favorite_advertisements = AdvertisementSerializer(read_only=True, many=True)
+    # user = UserSerializer(read_only=True)
+    user = serializers.ReadOnlyField(source='user.username')
+
+    class Meta:
+        model = FavoriteAdvertisement
+        fields = ['user', 'favorite_advertisements']
+
+    def create(self, validated_data):
+        validated_data["user"] = self.context["request"].user
+        return super().create(validated_data)
+
+    def validate(self, attrs):
+        attrs['user'] = self.initial_data['user']
+        if self.initial_data.get('method', None):
+            if attrs['user'].is_anonymous:
+                raise ValidationError('необходимо пройти аутентификацию')
+            attrs['favorite_advertisements'] = Advertisement.objects.filter(in_favorites_to__user=attrs['user'])
+        else:
+            advertisement = self.initial_data['advertisement']
+            advertisements = Advertisement.objects.filter(creator=attrs['user'])
+            if advertisement in advertisements:
+                raise ValidationError('нельзя добавить в избранное своё объявление')
+            elif advertisement.in_favorites_to.filter(user=attrs['user']).exists():
+                raise ValidationError('Объявление уже у вас в избранном')
+            attrs['favorite_advertisements'] = Advertisement.objects.filter(id=advertisement.id)
+        return attrs
