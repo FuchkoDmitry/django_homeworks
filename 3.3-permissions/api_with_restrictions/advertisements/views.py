@@ -1,4 +1,5 @@
 from django.contrib.auth.models import User
+from django.db.models import Q
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import status
 from rest_framework.decorators import action
@@ -60,6 +61,14 @@ class AdvertisementViewSet(ModelViewSet):
                             status=status.HTTP_400_BAD_REQUEST)
 
     def get_queryset(self):
-        queryset = super().get_queryset().exclude(status='DRAFT')
-        print(queryset)
-        return queryset
+        '''
+        формирование списка объявлений в зависимости от
+        пользователя, сделавшего запрос.
+        '''
+        if self.request.user.is_anonymous:
+            return super().get_queryset().exclude(status='DRAFT')
+        else:
+            queryset = super().get_queryset().filter(Q(creator=self.request.user) |
+                                                     Q(status__in=['OPEN', 'CLOSED'])
+                                                     ).distinct()
+            return queryset

@@ -17,9 +17,7 @@ class UserSerializer(serializers.ModelSerializer):
 class AdvertisementSerializer(serializers.ModelSerializer):
     """Serializer для объявления."""
 
-    # creator = UserSerializer(
-    #     read_only=True,
-    # )
+    # creator = UserSerializer(read_only=True)
     creator = serializers.ReadOnlyField(source='creator.username')
 
     class Meta:
@@ -51,8 +49,6 @@ class AdvertisementSerializer(serializers.ModelSerializer):
         return data
 
 
-
-
 class FavoriteAdvertisementSerializer(serializers.ModelSerializer):
     favorite_advertisements = AdvertisementSerializer(read_only=True, many=True)
     # user = UserSerializer(read_only=True)
@@ -71,7 +67,9 @@ class FavoriteAdvertisementSerializer(serializers.ModelSerializer):
         if self.initial_data.get('method', None):
             if attrs['user'].is_anonymous:
                 raise ValidationError('необходимо пройти аутентификацию')
-            attrs['favorite_advertisements'] = Advertisement.objects.filter(in_favorites_to__user=attrs['user'])
+            attrs['favorite_advertisements'] = Advertisement.objects.filter(
+                in_favorites_to__user=attrs['user']
+            )
         else:
             advertisement = self.initial_data['advertisement']
             advertisements = Advertisement.objects.filter(creator=attrs['user'])
@@ -79,5 +77,9 @@ class FavoriteAdvertisementSerializer(serializers.ModelSerializer):
                 raise ValidationError('нельзя добавить в избранное своё объявление')
             elif advertisement.in_favorites_to.filter(user=attrs['user']).exists():
                 raise ValidationError('Объявление уже у вас в избранном')
+            elif advertisement.status == 'DRAFT':
+                raise ValidationError(
+                    'объявление нельзя добавить в избранное, так как оно не опубликовано'
+                )
             attrs['favorite_advertisements'] = Advertisement.objects.filter(id=advertisement.id)
         return attrs
