@@ -81,9 +81,5 @@ class FavoriteAdvertisementSerializer(serializers.ModelSerializer):
                 raise ValidationError('нельзя добавить в избранное своё объявление')
             elif advertisement.in_favorites_to.filter(user=attrs['user']).exists():
                 raise ValidationError('Объявление уже у вас в избранном')
-            elif advertisement.status == 'DRAFT':
-                raise ValidationError(
-                    'объявление нельзя добавить в избранное, так как оно не опубликовано'
-                )
             attrs['favorite_advertisement'] = Advertisement.objects.filter(id=advertisement.id)
         return attrs
