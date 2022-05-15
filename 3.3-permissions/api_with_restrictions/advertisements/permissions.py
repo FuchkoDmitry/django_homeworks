@@ -8,7 +8,5 @@ class IsOwnerOrStaff(BasePermission):
         permission = request.user == obj.creator
         if request.user.is_staff or request.user.is_superuser:
             return True
-        elif request.method not in permissions.SAFE_METHODS and not permission:
-            raise ValidationError('Вы не можете изменять и удалять чужой заказ')
 
         return permission

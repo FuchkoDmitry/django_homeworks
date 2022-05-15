@@ -21,7 +21,6 @@ class AdvertisementViewSet(ModelViewSet):
     filterset_class = AdvertisementFilter
     filter_backends = [DjangoFilterBackend]
 
-
     def perform_create(self, serializer):
         serializer.save(creator=self.request.user)
         serializer.save(user=self.request.user)
@@ -30,18 +29,22 @@ class AdvertisementViewSet(ModelViewSet):
         """Получение прав для действий."""
         if self.action in ['update', 'partial_update', 'destroy']:
             return [IsOwnerOrStaff()]
-        elif self.action in ['create', 'addfavorites']:
+        elif self.action in ['create', 'addfavorites', 'getfavorites']:
             return [IsAuthenticated()]
         return [AllowAny()]
 
     @action(detail=True, methods=['post'])
     def addfavorites(self, request, pk=None):
-        request.data['user'] = request.user
-        request.data['advertisement'] = Advertisement.objects.get(id=pk)
-        serializer = FavoriteAdvertisementSerializer(data=request.data)
+        data = {
+            'user': request.user,
+            'advertisement': self.get_object()
+        }
+        serializer = FavoriteAdvertisementSerializer(data=data)
         if serializer.is_valid():
-            fa = FavoriteAdvertisement.objects.create(user=request.user)
-            fa.favorite_advertisements.add(request.data['advertisement'])
+            FavoriteAdvertisement.objects.create(
+                user=request.user,
+                favorite_advertisement=data['advertisement']
+            )
             return Response(serializer.data,
                             status=status.HTTP_201_CREATED)
         else:
@@ -50,9 +53,11 @@ class AdvertisementViewSet(ModelViewSet):
 
     @action(detail=False, methods=['get'])
     def getfavorites(self, request):
-        request.data['user'] = request.user
-        request.data['method'] = request.method
-        serializer = FavoriteAdvertisementSerializer(data=request.data)
+        data = {
+            'user': request.user,
+            'method': request.method
+        }
+        serializer = FavoriteAdvertisementSerializer(data=data)
         if serializer.is_valid():
             return Response(serializer.data,
                             status=status.HTTP_200_OK)

@@ -36,6 +36,8 @@ class FavoriteAdvertisement(models.Model):
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE, verbose_name='пользователь'
     )
-    favorite_advertisements = models.ManyToManyField(
-        Advertisement, related_name='in_favorites_to'
+    favorite_advertisement = models.ForeignKey(
+        Advertisement,
+        on_delete=models.CASCADE,
+        related_name='in_favorites_to'
     )
