@@ -1,7 +1,7 @@
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
-from django_testing.settings import MAX_STUDENTS_PER_COURSE
 from students.models import Course, Student
+from django_testing import settings
 
 
 class StudentSerializer(serializers.ModelSerializer):
@@ -12,7 +12,6 @@ class StudentSerializer(serializers.ModelSerializer):
 
 
 class CourseSerializer(serializers.ModelSerializer):
-    # students = StudentSerializer(many=True)
 
     class Meta:
         model = Course
@@ -20,10 +19,10 @@ class CourseSerializer(serializers.ModelSerializer):
 
     def validate(self, data):
         if self.context['request'].method in ("POST", "PATCH"):
-            if len(data.get('students', [])) > MAX_STUDENTS_PER_COURSE:
+            if len(data.get('students', [])) > settings.MAX_STUDENTS_PER_COURSE:
                 raise ValidationError(
                     f'на курсе не может быть '
-                    f'больше {MAX_STUDENTS_PER_COURSE} студентов'
+                    f'больше {settings.MAX_STUDENTS_PER_COURSE} студентов'
                 )
         return data
 

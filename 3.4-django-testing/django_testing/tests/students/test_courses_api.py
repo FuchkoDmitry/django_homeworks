@@ -1,6 +1,7 @@
 import pytest
 from django.urls import reverse
-from rest_framework.status import HTTP_201_CREATED, HTTP_200_OK, HTTP_204_NO_CONTENT, HTTP_400_BAD_REQUEST
+from rest_framework.status import HTTP_201_CREATED, HTTP_200_OK,\
+    HTTP_204_NO_CONTENT, HTTP_400_BAD_REQUEST
 
 
 @pytest.mark.django_db
@@ -104,30 +105,49 @@ def test_delete_course(client, course_factory):
 
 @pytest.mark.parametrize(
     'students_count,expected_status',
-    [(2, HTTP_201_CREATED),
-     (3, HTTP_400_BAD_REQUEST)
+    [(1, HTTP_201_CREATED),
+     (2, HTTP_400_BAD_REQUEST)
      ]
 )
 @pytest.mark.django_db
-def test_course_students(
-        client, course_factory, student_factory, settings, students_count, expected_status):
-    settings.MAX_STUDENTS_PER_COURSE = 1
+def test_post_check_max_students(
+        client, course_factory, student_factory,
+        max_students_settings, students_count, expected_status, settings):
 
     students = student_factory(_quantity=students_count)
-
     course = course_factory(students=students)
-
     data = {"name": course.name, "students": [s.id for s in students]}
-
     url = reverse('courses-list')
 
-    response = client.post(url, data=data)
+    """
+    если передать в функцию фикстуру settings и указать:
+    settings.MAX_STUDENTS_PER_COURSE = 1
+    параметр меняется, но почему то валидация происходит
+    по первоначальному параметру равному 20
+    """
 
-    print(response)
-    print(response.json())
-    print(response.data)
+    response = client.post(url, data=data)
 
     assert response.status_code == expected_status
 
 
+@pytest.mark.parametrize(
+    'students_count,expected_status',
+    [(1, HTTP_200_OK),
+     (2, HTTP_400_BAD_REQUEST)
+     ]
+)
+@pytest.mark.django_db
+def test_patch_check_max_students(
+        client, course_factory, student_factory,
+        max_students_settings, students_count, expected_status):
 
+    course_to_update = course_factory()
+    students = student_factory(_quantity=students_count)
+    url = reverse('courses-detail', kwargs={'pk': course_to_update.id})
+    data_to_update = {'name': 'new_course_name',
+                      "students": [s.id for s in students]}
+
+    response = client.patch(url, data=data_to_update)
+
+    assert response.status_code == expected_status
